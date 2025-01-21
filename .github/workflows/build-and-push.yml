@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Ensure the workflow can create releases
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
