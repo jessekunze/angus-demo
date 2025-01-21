@@ -15,15 +15,31 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18' # Use Node.js v18 (LTS)
+          node-version: '18'
 
       - name: Install dependencies and build
         run: |
           npm install
           npm run build
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v3
+      - name: Zip the dist folder
+        run: |
+          zip -r dist.zip dist/
+
+      - name: Create a GitHub Release
+        uses: actions/upload-release-asset@v1
         with:
-          name: dist
-          path: dist/
+          upload_url: ${{ github.event.repository.releases_url }}
+          asset_path: ./dist.zip
+          asset_name: dist.zip
+          asset_content_type: application/zip
+          tag: latest
+          release_name: "Website Build"
+
+      - name: Trigger CDK Deployment
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          repository: jessekunze/angus-cdk
+          event-type: trigger-cdk-deploy
+          client-payload: '{"tag": "latest"}'
+          token: ${{ secrets.GITHUB_TOKEN }}
