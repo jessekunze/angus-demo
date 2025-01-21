@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Ensure the workflow can manage releases and tags
 
     steps:
       - name: Checkout code
@@ -29,16 +29,33 @@ jobs:
         run: |
           zip -r dist.zip dist/
 
+      - name: Debug existing releases and tags
+        run: |
+          echo "Checking for existing release with tag 'latest'..."
+          curl -s \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/releases/tags/latest || echo "No release found"
+          echo "Checking for existing tag 'latest'..."
+          curl -s \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/git/refs/tags/latest || echo "No tag found"
+
       - name: Delete existing release (if exists)
         run: |
-          curl -X DELETE \
+          echo "Deleting existing release with tag 'latest'..."
+          curl -s \
+            -X DELETE \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/releases/tags/latest || true
-          curl -X DELETE \
+            https://api.github.com/repos/${{ github.repository }}/releases/tags/latest || echo "No release to delete"
+          echo "Deleting existing tag 'latest'..."
+          curl -s \
+            -X DELETE \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/git/refs/tags/latest || true
+            https://api.github.com/repos/${{ github.repository }}/git/refs/tags/latest || echo "No tag to delete"
 
       - name: Create a GitHub Release
         id: create_release
