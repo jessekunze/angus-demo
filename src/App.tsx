@@ -1,33 +1,30 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import cat from '/cat.svg'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [catCount, setCatCount] = useState(0);
+
+  const addCat = () => {
+    setCatCount((prevCount) => prevCount + 1);
+  }
+
+  const removeCat = () => {
+    setCatCount((prevCount) => (prevCount > 0 ? prevCount - 1 : 0));
+  };
 
   return (
     <>
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        {Array.from({ length: catCount }, (_, index) => (
+          <img key={index} src={cat} className="logo" alt={`Cat ${index + 1}`} />
+        ))}
       </div>
-      <h1>Vite + React</h1>
+      <h1>Cat + Cat</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+        <button onClick={addCat}>Add Cat</button>
+        <button disabled={catCount < 1} onClick={removeCat}>Remove Cat</button>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }
