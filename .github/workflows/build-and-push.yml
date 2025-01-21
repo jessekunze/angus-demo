@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Ensure the workflow can create releases
+      contents: write
 
     steps:
       - name: Checkout code
@@ -29,8 +29,19 @@ jobs:
         run: |
           zip -r dist.zip dist/
 
+      - name: Delete existing release (if exists)
+        run: |
+          curl -X DELETE \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/releases/tags/latest || true
+          curl -X DELETE \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/git/refs/tags/latest || true
+
       - name: Create a GitHub Release
-        id: create_release # Add an ID to reference this step
+        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,7 +56,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # Correctly reference the output of create_release
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist.zip
           asset_name: dist.zip
           asset_content_type: application/zip
