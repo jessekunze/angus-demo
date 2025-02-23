@@ -27,11 +27,17 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Inject API Key from GitHub Secrets
+      - name: Fetch API Key from AWS Secrets Manager
         run: |
-          echo "VITE_API_KEY=${{ secrets.API_KEY }}" > .env
-          echo "API Key loaded into .env"
+          API_KEY=$(aws secretsmanager get-secret-value --secret-id angus/api-key --query SecretString --output text | jq -r '.api_key')
+          echo "VITE_API_KEY=$API_KEY" >> $GITHUB_ENV
+          echo "API Key loaded into GitHub Environment"
 
+      - name: Inject API Key into .env
+        run: |
+          echo "VITE_API_KEY=${{ env.VITE_API_KEY }}" > .env
+          echo "API Key injected into .env"
+          
       - name: Retrieve API Gateway URL from SSM
         run: |
           API_GATEWAY_URL=$(aws ssm get-parameter --name "/angus/api-url" --query "Parameter.Value" --output text --region us-east-1)
