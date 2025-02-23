@@ -13,40 +13,48 @@ export const useCatLogic = () => {
 
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load Users, Cats, when page loads.
+  // Load Users, Cats when page loads
   useEffect(() => {
     const storedUserId = getUserIdLocalStorage();
 
-    if (storedUserId) {
-      setUserId(storedUserId);
+    const initializeUser = async () => {
       setIsLoading(true);
-      fetchCatCount(storedUserId)
-        .then((data) => {
-          if (data) setCatCount(data.count);
-        })
-        .catch(() => setError("Failed to fetch cat count"))
-        .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(true);
-      setupUser()
-        .then((newUser) => {
+      try {
+        if (storedUserId) {
+          setUserId(storedUserId);
+          const data = await fetchCatCount(storedUserId);
+
+          if (data) {
+            setCatCount(data.count);
+          }
+        } else {
+          throw new Error("No user ID found, setting up new user");
+        }
+      } catch (error) {
+        console.error("User ID might be invalid, creating a new one...");
+
+        try {
+          const newUser = await setupUser();
           if (newUser) {
             setUserId(newUser.userId);
             setUserIdLocalStorage(newUser.userId);
-            return fetchCatCount(newUser.userId);
+            const data = await fetchCatCount(newUser.userId);
+            if (data) setCatCount(data.count);
           }
-        })
-        .then((data) => {
-          if (data) setCatCount(data.count);
-        })
-        .catch(() => setError("Failed to set up user"))
-        .finally(() => setIsLoading(false));
-    }
+        } catch {
+          setError("Failed to set up user");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeUser();
 
     // Save cat count before unload in case of refresh, etc
     const handleBeforeUnload = () => {
-      if (pendingCatCount !== null) {
-        updateCatCountInDB(userId!, pendingCatCount);
+      if (pendingCatCount !== null && userId) {
+        updateCatCountInDB(userId, pendingCatCount);
       }
     };
 
@@ -56,9 +64,9 @@ export const useCatLogic = () => {
 
   // Debounce multiple clicks into fewer API calls
   useEffect(() => {
-    if (pendingCatCount !== null) {
+    if (pendingCatCount !== null && userId) {
       debounceTimeout.current = setTimeout(() => {
-        updateCatCountInDB(userId!, pendingCatCount)
+        updateCatCountInDB(userId, pendingCatCount)
           .catch(() => setError("Failed to update cat count"));
         debounceTimeout.current = null;
       }, DEBOUNCE_DELAY);
@@ -67,7 +75,7 @@ export const useCatLogic = () => {
         if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       };
     }
-  }, [pendingCatCount]);
+  }, [pendingCatCount, userId]);
 
   // Function: Update Cat Count (Local + API Debounced)
   const changeCatCount = (change: number) => {
