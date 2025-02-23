@@ -27,7 +27,7 @@ jobs:
 
       - name: Retrieve API Gateway URL from SSM
         run: |
-          API_GATEWAY_URL=$(aws ssm get-parameter --name "/angus/api-url" --query "Parameter.Value" --output text)
+          API_GATEWAY_URL=$(aws ssm get-parameter --name "/angus/api-url" --query "Parameter.Value" --output text --region us-east-1)
           echo "VITE_API_URL=$API_GATEWAY_URL" >> $GITHUB_ENV
 
       - name: Install dependencies and build
