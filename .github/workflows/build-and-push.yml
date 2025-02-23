@@ -20,6 +20,16 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Inject API Key from GitHub Secrets
+        run: |
+          echo "VITE_API_KEY=${{ secrets.API_KEY }}" > .env
+          echo "API Key loaded into .env"
+          
+        - name: Retrieve API Gateway URL from SSM
+        run: |
+          API_GATEWAY_URL=$(aws ssm get-parameter --name "/angus/api-url" --query "Parameter.Value" --output text)
+          echo "VITE_API_URL=$API_GATEWAY_URL" >> $GITHUB_ENV
+
       - name: Install dependencies and build
         run: |
           npm install

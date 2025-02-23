@@ -1,32 +1,20 @@
-import { useState } from 'react'
-import cat from '/cat.svg'
-import './App.css'
+import { useCatLogic } from "./hooks/useCatLogic";
+import CatDisplay from "./components/CatDisplay";
+import CatButtons from "./components/CatButtons";
+import "./App.css";
 
 function App() {
-  const [catCount, setCatCount] = useState(0);
-
-  const addCat = () => {
-    setCatCount((prevCount) => prevCount + 1);
-  }
-
-  const removeCat = () => {
-    setCatCount((prevCount) => (prevCount > 0 ? prevCount - 1 : 0));
-  };
+  const { catCount, changeCatCount, isLoading, error } = useCatLogic();
 
   return (
-    <>
+    <div className="container">
       <div>
-        {Array.from({ length: catCount }, (_, index) => (
-          <img key={index} src={cat} className="logo" alt={`Cat ${index + 1}`} />
-        ))}
+        {error ? <p style={{ color: "red" }}>{error}</p> : isLoading ? <p>Loading...</p> : <CatDisplay catCount={catCount} />}
       </div>
       <h1>Cat + Cat</h1>
-      <div className="card">
-        <button onClick={addCat}>Add Cat</button>
-        <button disabled={catCount < 1} onClick={removeCat}>Remove Cat</button>
-      </div>
-    </>
-  )
+      <CatButtons changeCatCount={changeCatCount} isLoading={isLoading} catCount={catCount} />
+    </div>
+  );
 }
 
-export default App
+export default App;
